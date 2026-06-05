@@ -29,9 +29,11 @@
             </select>
             <button onclick="saveRecord()" style="background:#007bff; color:white;">تسجيل</button>
             <hr>
+            <input type="text" id="searchName" placeholder="اسم الموظف للبحث">
+            <button onclick="filterByEmployee()">بحث عن موظف</button>
             <input type="date" id="filterDate">
-            <button onclick="filterByDate()">تقرير تاريخ محدد</button>
-            <button onclick="exportToExcel()" style="background:#28a745; color:white;">تصدير إلى Excel</button>
+            <button onclick="filterByDate()">تقرير يومي</button>
+            <button onclick="exportToCSV()" style="background:#28a745; color:white;">تصدير Excel</button>
             <button onclick="renderTable(records)">عرض الكل</button>
         </div>
 
@@ -64,20 +66,25 @@
         }
 
 
+        function filterByEmployee() {
+            const name = document.getElementById('searchName').value;
+            renderTable(records.filter(r => r.name.includes(name)));
+        }
+
+
         function filterByDate() {
             const date = document.getElementById('filterDate').value;
-            if(!date) return;
             renderTable(records.filter(r => r.date === date));
         }
 
 
-        function exportToExcel() {
-            let table = document.getElementById("attendanceTable");
-            let html = table.outerHTML;
-            let url = 'data:application/vnd.ms-excel,' + encodeURIComponent(html);
+        function exportToCSV() {
+            let csv = "\uFEFFالاسم,التاريخ,الوقت,الحالة\n";
+            records.forEach(r => csv += `${r.name},${r.date},${r.time},${r.status}\n`);
+            let blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
             let link = document.createElement("a");
-            link.download = "تقرير_الحضور.xls";
-            link.href = url;
+            link.href = URL.createObjectURL(blob);
+            link.download = "تقرير_الحضور.csv";
             link.click();
         }
 
