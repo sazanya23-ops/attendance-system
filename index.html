@@ -2,81 +2,87 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>إدارة الحضور - إعدادية النجدين</title>
+    <title>نظام الإدارة - إعدادية النجدين</title>
     <style>
         body { font-family: sans-serif; padding: 20px; background: #f4f4f9; text-align: center; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        .admin-section { background: #e9ecef; padding: 15px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ccc; }
-        input, select { padding: 8px; margin: 5px; border-radius: 4px; border: 1px solid #ccc; }
-        button { padding: 8px 15px; cursor: pointer; border-radius: 4px; border: none; }
-        .btn-add { background: #28a745; color: white; }
-        .btn-record { background: #007bff; color: white; }
-        .btn-delete { background: #dc3545; color: white; padding: 5px 10px; }
+        .container { max-width: 950px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .controls { background: #e9ecef; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        input, select, button { padding: 8px; margin: 5px; border-radius: 4px; border: 1px solid #ccc; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #ddd; padding: 10px; }
+        @media print { .no-print { display: none; } }
     </style>
 </head>
 <body>
     <div class="container">
         <h3>المديرية العامة لتربية القادسية - تربية الحمزة - إعدادية النجدين للبنين</h3>
-        <hr>
 
 
-        <div class="admin-section">
-            <input type="text" id="newCode" placeholder="كود الموظف">
-            <input type="text" id="newName" placeholder="اسم الموظف">
-            <button class="btn-add" onclick="addEmployee()">إضافة موظف</button>
-        </div>
-
-
-        <div>
+        <div class="controls no-print">
             <input type="text" id="empCode" placeholder="كود الموظف">
-            <input type="time" id="manualTime">
+            <input type="date" id="recordDate">
             <select id="attendanceStatus">
                 <option value="حاضر">حاضر</option>
                 <option value="متأخر">متأخر</option>
                 <option value="مجاز">مجاز</option>
                 <option value="غائب">غائب</option>
             </select>
-            <button class="btn-record" onclick="recordAttendance()">تسجيل</button>
+            <button onclick="saveRecord()" style="background:#007bff; color:white;">تسجيل</button>
+            <hr>
+            <button onclick="filterReport('today')">تقرير اليوم</button>
+            <button onclick="filterReport('week')">تقرير الأسبوع</button>
+            <button onclick="filterReport('month')">تقرير الشهر</button>
+            <button onclick="window.print()" style="background:#ffc107;">طباعة التقارير</button>
         </div>
 
 
         <table id="attendanceTable">
-            <tr><th>الاسم</th><th>التاريخ</th><th>الوقت</th><th>الحالة</th><th>إجراء</th></tr>
+            <thead><tr><th>الاسم</th><th>التاريخ</th><th>الحالة</th><th>إجراء</th></tr></thead>
+            <tbody id="tableBody"></tbody>
         </table>
     </div>
 
 
     <script>
+        let records = JSON.parse(localStorage.getItem('records')) || [];
         let employees = JSON.parse(localStorage.getItem('employees')) || {};
 
 
-        function addEmployee() {
-            const code = document.getElementById('newCode').value;
-            const name = document.getElementById('newName').value;
-            if(code && name) { employees[code] = name; localStorage.setItem('employees', JSON.stringify(employees)); alert("تمت إضافة الموظف!"); }
-        }
-
-
-        function recordAttendance() {
+        function saveRecord() {
             const code = document.getElementById('empCode').value;
+            const date = document.getElementById('recordDate').value || new Date().toISOString().split('T')[0];
             const status = document.getElementById('attendanceStatus').value;
-            const manualTime = document.getElementById('manualTime').value;
-
-
-            if (!employees[code]) { alert("كود غير موجود!"); return; }
-
-
-            const now = new Date();
-            const displayTime = (status === "غائب") ? "---" : (manualTime ? manualTime : now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}));
-
-
-            const table = document.getElementById('attendanceTable');
-            const row = table.insertRow(1);
-            row.innerHTML = `<td>${employees[code]}</td><td>${now.toLocaleDateString()}</td><td>${displayTime}</td><td>${status}</td>
-                             <td><button class="btn-delete" onclick="this.parentElement.parentElement.remove()">حذف</button></td>`;
+            if(!employees[code]) { alert("كود الموظف غير موجود"); return; }
+            records.push({name: employees[code], date: date, status: status});
+            localStorage.setItem('records', JSON.stringify(records));
+            renderTable(records);
         }
+
+
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = "";
+            data.forEach((rec, index) => {
+                tbody.innerHTML += `<tr><td>${rec.name}</td><td>${rec.date}</td><td>${rec.status}</td>
+                <td><button onclick="deleteRecord(${index})">حذف</button></td></tr>`;
+            });
+        }
+
+
+        function filterReport(type) {
+            const now = new Date();
+            const filtered = records.filter(r => {
+                const rDate = new Date(r.date);
+                if(type === 'today') return r.date === now.toISOString().split('T')[0];
+                if(type === 'month') return rDate.getMonth() === now.getMonth();
+                return true; // تعبير مبسط للأسبوع
+            });
+            renderTable(filtered);
+        }
+
+
+        function deleteRecord(index) { records.splice(index, 1); localStorage.setItem('records', JSON.stringify(records)); renderTable(records); }
+        renderTable(records);
     </script>
 </body>
 </html>
