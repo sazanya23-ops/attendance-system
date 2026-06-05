@@ -71,19 +71,21 @@
 
         function filterByEmployee() {
             const name = document.getElementById('searchName').value;
-            renderTable(records.filter(r => r.name.includes(name)));
+            currentData = records.filter(r => r.name.includes(name));
+            renderTable(currentData);
         }
 
 
         function filterByDate() {
             const date = document.getElementById('filterDate').value;
-            renderTable(records.filter(r => r.date === date));
+            currentData = records.filter(r => r.date === date);
+            renderTable(currentData);
         }
 
 
         function filterReport(type) {
             const now = new Date();
-            renderTable(records.filter(r => {
+            currentData = records.filter(r => {
                 const rDate = new Date(r.date);
                 if(type === 'month') return rDate.getMonth() === now.getMonth() && rDate.getFullYear() === now.getFullYear();
                 if(type === 'week') {
@@ -91,7 +93,8 @@
                     return diff >= 0 && diff <= 7;
                 }
                 return false;
-            }));
+            });
+            renderTable(currentData);
         }
 
 
