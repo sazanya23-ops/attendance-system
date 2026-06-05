@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>نظام الإدارة - إعدادية النجدين</title>
+    <title>إدارة الحضور - إعدادية النجدين</title>
     <style>
         body { font-family: sans-serif; padding: 20px; background: #f4f4f9; text-align: center; }
         .container { max-width: 950px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
@@ -21,6 +21,7 @@
         <div class="controls no-print">
             <input type="text" id="empCode" placeholder="كود الموظف">
             <input type="date" id="recordDate">
+            <input type="time" id="recordTime">
             <select id="attendanceStatus">
                 <option value="حاضر">حاضر</option>
                 <option value="متأخر">متأخر</option>
@@ -32,12 +33,13 @@
             <button onclick="filterReport('today')">تقرير اليوم</button>
             <button onclick="filterReport('week')">تقرير الأسبوع</button>
             <button onclick="filterReport('month')">تقرير الشهر</button>
+            <button onclick="filterReport('all')">عرض الكل</button>
             <button onclick="window.print()" style="background:#ffc107;">طباعة التقارير</button>
         </div>
 
 
         <table id="attendanceTable">
-            <thead><tr><th>الاسم</th><th>التاريخ</th><th>الحالة</th><th>إجراء</th></tr></thead>
+            <thead><tr><th>الاسم</th><th>التاريخ</th><th>الوقت</th><th>الحالة</th><th>إجراء</th></tr></thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
@@ -51,9 +53,12 @@
         function saveRecord() {
             const code = document.getElementById('empCode').value;
             const date = document.getElementById('recordDate').value || new Date().toISOString().split('T')[0];
+            const time = document.getElementById('recordTime').value || "---";
             const status = document.getElementById('attendanceStatus').value;
+
+
             if(!employees[code]) { alert("كود الموظف غير موجود"); return; }
-            records.push({name: employees[code], date: date, status: status});
+            records.push({name: employees[code], date: date, time: time, status: status});
             localStorage.setItem('records', JSON.stringify(records));
             renderTable(records);
         }
@@ -63,7 +68,7 @@
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = "";
             data.forEach((rec, index) => {
-                tbody.innerHTML += `<tr><td>${rec.name}</td><td>${rec.date}</td><td>${rec.status}</td>
+                tbody.innerHTML += `<tr><td>${rec.name}</td><td>${rec.date}</td><td>${rec.time}</td><td>${rec.status}</td>
                 <td><button onclick="deleteRecord(${index})">حذف</button></td></tr>`;
             });
         }
@@ -71,11 +76,18 @@
 
         function filterReport(type) {
             const now = new Date();
+            const today = now.toISOString().split('T')[0];
+
+
             const filtered = records.filter(r => {
                 const rDate = new Date(r.date);
-                if(type === 'today') return r.date === now.toISOString().split('T')[0];
-                if(type === 'month') return rDate.getMonth() === now.getMonth();
-                return true; // تعبير مبسط للأسبوع
+                if(type === 'today') return r.date === today;
+                if(type === 'month') return rDate.getMonth() === now.getMonth() && rDate.getFullYear() === now.getFullYear();
+                if(type === 'week') {
+                    const diff = (now - rDate) / (1000 * 60 * 60 * 24);
+                    return diff >= 0 && diff <= 7;
+                }
+                return true;
             });
             renderTable(filtered);
         }
