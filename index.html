@@ -17,7 +17,7 @@
 </head>
 <body>
     <div class="container">
-        <h3>إعدادية النجدين للبنين - لوحة التحكم</h3>
+        <h3>المديرية العامة لتربية القادسية - تربية الحمزة - اعدادية النجدين للبنين - لوحة التحكم</h3>
 
 
         <div class="admin-section">
@@ -29,11 +29,12 @@
 
         <div>
             <input type="text" id="empCode" placeholder="كود الموظف">
-            <input type="time" id="manualTime" title="اختر الوقت يدوياً أو اتركه فارغاً للوقت الحالي">
+            <input type="time" id="manualTime">
             <select id="attendanceStatus">
                 <option value="حاضر">حاضر</option>
                 <option value="متأخر">متأخر</option>
                 <option value="مجاز">مجاز</option>
+                <option value="غائب">غائب</option>
             </select>
             <button class="btn-record" onclick="recordAttendance()">تسجيل</button>
         </div>
@@ -52,7 +53,7 @@
         function addEmployee() {
             const code = document.getElementById('newCode').value;
             const name = document.getElementById('newName').value;
-            if(code && name) { employees[code] = name; localStorage.setItem('employees', JSON.stringify(employees)); alert("تمت إضافة الموظف!"); }
+            if(code && name) { employees[code] = name; localStorage.setItem('employees', JSON.stringify(employees)); alert("تمت الإضافة!"); }
         }
 
 
@@ -67,7 +68,10 @@
 
             const now = new Date();
             const days = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
-            const displayTime = manualTime ? manualTime : now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+
+            // إذا كان "غائب"، نضع الوقت فارغاً أو شرطة
+            const displayTime = (status === "غائب") ? "---" : (manualTime ? manualTime : now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}));
 
 
             const row = document.getElementById('attendanceTable').insertRow(1);
