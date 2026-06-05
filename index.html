@@ -11,13 +11,15 @@
         button { padding: 8px 15px; cursor: pointer; border-radius: 4px; border: none; }
         .btn-add { background: #28a745; color: white; }
         .btn-record { background: #007bff; color: white; }
+        .btn-delete { background: #dc3545; color: white; padding: 5px 10px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #ddd; padding: 10px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h3>المديرية العامة لتربية القادسية - تربية الحمزة - اعدادية النجدين للبنين - لوحة التحكم</h3>
+        <h3>المديرية العامة لتربية القادسية - تربية الحمزة - إعدادية النجدين للبنين</h3>
+        <hr>
 
 
         <div class="admin-section">
@@ -41,7 +43,7 @@
 
 
         <table id="attendanceTable">
-            <tr><th>الاسم</th><th>التاريخ</th><th>اليوم</th><th>الوقت</th><th>الحالة</th></tr>
+            <tr><th>الاسم</th><th>التاريخ</th><th>الوقت</th><th>الحالة</th><th>إجراء</th></tr>
         </table>
     </div>
 
@@ -53,7 +55,7 @@
         function addEmployee() {
             const code = document.getElementById('newCode').value;
             const name = document.getElementById('newName').value;
-            if(code && name) { employees[code] = name; localStorage.setItem('employees', JSON.stringify(employees)); alert("تمت الإضافة!"); }
+            if(code && name) { employees[code] = name; localStorage.setItem('employees', JSON.stringify(employees)); alert("تمت إضافة الموظف!"); }
         }
 
 
@@ -67,15 +69,13 @@
 
 
             const now = new Date();
-            const days = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
-
-
-            // إذا كان "غائب"، نضع الوقت فارغاً أو شرطة
             const displayTime = (status === "غائب") ? "---" : (manualTime ? manualTime : now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}));
 
 
-            const row = document.getElementById('attendanceTable').insertRow(1);
-            row.innerHTML = `<td>${employees[code]}</td><td>${now.toLocaleDateString()}</td><td>${days[now.getDay()]}</td><td>${displayTime}</td><td>${status}</td>`;
+            const table = document.getElementById('attendanceTable');
+            const row = table.insertRow(1);
+            row.innerHTML = `<td>${employees[code]}</td><td>${now.toLocaleDateString()}</td><td>${displayTime}</td><td>${status}</td>
+                             <td><button class="btn-delete" onclick="this.parentElement.parentElement.remove()">حذف</button></td>`;
         }
     </script>
 </body>
