@@ -10,7 +10,6 @@
         input, select, button { padding: 8px; margin: 5px; border-radius: 4px; border: 1px solid #ccc; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #ddd; padding: 10px; }
-        @media print { .no-print { display: none; } }
     </style>
 </head>
 <body>
@@ -18,7 +17,7 @@
         <h3>المديرية العامة لتربية القادسية - تربية الحمزة - إعدادية النجدين للبنين</h3>
 
 
-        <div class="controls no-print">
+        <div class="controls">
             <input type="text" id="empCode" placeholder="كود الموظف">
             <input type="date" id="recordDate">
             <input type="time" id="recordTime">
@@ -30,11 +29,10 @@
             </select>
             <button onclick="saveRecord()" style="background:#007bff; color:white;">تسجيل</button>
             <hr>
-            <button onclick="filterReport('today')">تقرير اليوم</button>
-            <button onclick="filterReport('week')">تقرير الأسبوع</button>
-            <button onclick="filterReport('month')">تقرير الشهر</button>
+            <input type="date" id="filterDate">
+            <button onclick="filterByDate()">تقرير تاريخ محدد</button>
+            <button onclick="exportToExcel()" style="background:#28a745; color:white;">تصدير إلى Excel</button>
             <button onclick="renderTable(records)">عرض الكل</button>
-            <button onclick="window.print()" style="background:#ffc107;">طباعة</button>
         </div>
 
 
@@ -50,7 +48,6 @@
         let employees = JSON.parse(localStorage.getItem('employees')) || {};
 
 
-        // جعل الوقت والتاريخ تلقائي عند فتح الصفحة
         document.getElementById('recordDate').valueAsDate = new Date();
         document.getElementById('recordTime').value = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false});
 
@@ -60,14 +57,28 @@
             const date = document.getElementById('recordDate').value;
             const time = document.getElementById('recordTime').value;
             const status = document.getElementById('attendanceStatus').value;
-
-
-            if(!employees[code]) { alert("كود الموظف غير موجود!"); return; }
-
-
+            if(!employees[code]) { alert("كود غير موجود!"); return; }
             records.push({name: employees[code], date: date, time: time, status: status});
             localStorage.setItem('records', JSON.stringify(records));
             renderTable(records);
+        }
+
+
+        function filterByDate() {
+            const date = document.getElementById('filterDate').value;
+            if(!date) return;
+            renderTable(records.filter(r => r.date === date));
+        }
+
+
+        function exportToExcel() {
+            let table = document.getElementById("attendanceTable");
+            let html = table.outerHTML;
+            let url = 'data:application/vnd.ms-excel,' + encodeURIComponent(html);
+            let link = document.createElement("a");
+            link.download = "تقرير_الحضور.xls";
+            link.href = url;
+            link.click();
         }
 
 
@@ -78,25 +89,6 @@
                 tbody.innerHTML += `<tr><td>${rec.name}</td><td>${rec.date}</td><td>${rec.time}</td><td>${rec.status}</td>
                 <td><button onclick="deleteRecord(${index})">حذف</button></td></tr>`;
             });
-        }
-
-
-        function filterReport(type) {
-            const now = new Date();
-            const today = now.toISOString().split('T')[0];
-
-
-            const filtered = records.filter(r => {
-                const rDate = new Date(r.date);
-                if(type === 'today') return r.date === today;
-                if(type === 'month') return rDate.getMonth() === now.getMonth() && rDate.getFullYear() === now.getFullYear();
-                if(type === 'week') {
-                    const diffTime = Math.abs(now - rDate);
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-                    return diffDays <= 7;
-                }
-            });
-            renderTable(filtered);
         }
 
 
