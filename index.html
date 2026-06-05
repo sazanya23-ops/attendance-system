@@ -15,8 +15,6 @@
 <body>
     <div class="container">
         <h3>المديرية العامة لتربية القادسية - تربية الحمزة - إعدادية النجدين للبنين</h3>
-
-
         <div class="controls">
             <input type="text" id="empCode" placeholder="كود الموظف">
             <input type="date" id="recordDate">
@@ -31,86 +29,35 @@
             <hr>
             <input type="text" id="searchName" placeholder="اسم الموظف">
             <button onclick="filterByEmployee()">بحث موظف</button>
-            <input type="date" id="filterDate">
-            <button onclick="filterByDate()">تقرير يومي</button>
-            <button onclick="filterReport('week')">تقرير أسبوعي</button>
-            <button onclick="filterReport('month')">تقرير شهري</button>
-            <button onclick="exportTableToCSV()" style="background:#28a745; color:white;">تصدير الظاهر لـ Excel</button>
+            <button onclick="exportTableToCSV()" style="background:#28a745; color:white;">تصدير Excel</button>
             <button onclick="renderTable(records)">عرض الكل</button>
         </div>
-
-
         <table id="attendanceTable">
             <thead><tr><th>الاسم</th><th>التاريخ</th><th>الوقت</th><th>الحالة</th><th>إجراء</th></tr></thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
-
-
     <script>
         let records = JSON.parse(localStorage.getItem('records')) || [];
-        let employees = JSON.parse(localStorage.getItem('employees')) || {};
-        let currentData = records;
-
-
-        document.getElementById('recordDate').valueAsDate = new Date();
-        document.getElementById('recordTime').value = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false});
-
-
+        let employees = {"101": "رحيم", "102": "عصام"};
         function saveRecord() {
             const code = document.getElementById('empCode').value;
-            const date = document.getElementById('recordDate').value;
-            const time = document.getElementById('recordTime').value;
             const status = document.getElementById('attendanceStatus').value;
-            if(!employees[code]) { alert("كود غير موجود!"); return; }
-            records.push({name: employees[code], date: date, time: time, status: status});
+            records.push({name: employees[code] || "غير معروف", date: document.getElementById('recordDate').value, time: document.getElementById('recordTime').value, status: status});
             localStorage.setItem('records', JSON.stringify(records));
             renderTable(records);
         }
-
-
-        function filterByEmployee() {
-            const name = document.getElementById('searchName').value;
-            currentData = records.filter(r => r.name.includes(name));
-            renderTable(currentData);
-        }
-
-
-        function filterByDate() {
-            const date = document.getElementById('filterDate').value;
-            currentData = records.filter(r => r.date === date);
-            renderTable(currentData);
-        }
-
-
-        function filterReport(type) {
-            const now = new Date();
-            currentData = records.filter(r => {
-                const rDate = new Date(r.date);
-                if(type === 'month') return rDate.getMonth() === now.getMonth() && rDate.getFullYear() === now.getFullYear();
-                if(type === 'week') {
-                    const diff = (now - rDate) / (1000 * 60 * 60 * 24);
-                    return diff >= 0 && diff <= 7;
-                }
-                return false;
-            });
-            renderTable(currentData);
-        }
-
-
         function exportTableToCSV() {
+            // إضافة رمز الـ UTF-8 BOM ليتعرف إكسل على اللغة العربية
             let csv = "\uFEFFالاسم,التاريخ,الوقت,الحالة\n";
-            currentData.forEach(r => csv += `${r.name},${r.date},${r.time},${r.status}\n`);
+            records.forEach(r => csv += `${r.name},${r.date},${r.time},${r.status}\n`);
             let blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
             let link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = "تقرير_مخصص.csv";
+            link.download = "تقرير_الحضور.csv";
             link.click();
         }
-
-
         function renderTable(data) {
-            currentData = data;
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = "";
             data.forEach((rec, index) => {
@@ -118,8 +65,6 @@
                 <td><button onclick="deleteRecord(${index})">حذف</button></td></tr>`;
             });
         }
-
-
         function deleteRecord(index) { records.splice(index, 1); localStorage.setItem('records', JSON.stringify(records)); renderTable(records); }
         renderTable(records);
     </script>
