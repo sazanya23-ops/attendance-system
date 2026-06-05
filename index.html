@@ -14,7 +14,16 @@
 </head>
 <body>
     <div class="container">
-        <h3>المديرية العامة لتربية القادسية - تربية الحمزة - إعدادية النجدين للبنين</h3>
+        <h3>إدارة الحضور - إعدادية النجدين للبنين</h3>
+
+
+        <div class="controls">
+            <input type="text" id="newEmpName" placeholder="اسم الموظف الجديد">
+            <input type="text" id="newEmpCode" placeholder="كود الموظف">
+            <button onclick="addEmployee()" style="background:#6c757d; color:white;">إضافة موظف جديد</button>
+        </div>
+
+
         <div class="controls">
             <input type="text" id="empCode" placeholder="كود الموظف">
             <input type="date" id="recordDate">
@@ -27,30 +36,52 @@
             </select>
             <button onclick="saveRecord()" style="background:#007bff; color:white;">تسجيل</button>
             <hr>
-            <input type="text" id="searchName" placeholder="اسم الموظف">
+            <input type="text" id="searchName" placeholder="بحث باسم الموظف">
             <button onclick="filterByEmployee()">بحث موظف</button>
-            <input type="date" id="filterDate">
-            <button onclick="filterByDate()">تقرير يومي</button>
             <button onclick="filterReport('week')" style="background:#ffc107;">أسبوعي</button>
             <button onclick="filterReport('month')" style="background:#17a2b8; color:white;">شهري</button>
             <button onclick="exportTableToCSV()" style="background:#28a745; color:white;">تصدير Excel</button>
             <button onclick="renderTable(records)">عرض الكل</button>
         </div>
+
+
         <table id="attendanceTable">
             <thead><tr><th>الاسم</th><th>التاريخ</th><th>الوقت</th><th>الحالة</th><th>إجراء</th></tr></thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
+
+
     <script>
         let records = JSON.parse(localStorage.getItem('records')) || [];
-        let employees = {"101": "رحيم", "102": "عصام"};
+        let employees = JSON.parse(localStorage.getItem('employees')) || {};
         let currentData = records;
+
+
+        document.getElementById('recordDate').valueAsDate = new Date();
+        document.getElementById('recordTime').value = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false});
+
+
+        function addEmployee() {
+            const name = document.getElementById('newEmpName').value;
+            const code = document.getElementById('newEmpCode').value;
+            if(name && code) {
+                employees[code] = name;
+                localStorage.setItem('employees', JSON.stringify(employees));
+                alert("تم إضافة الموظف: " + name);
+            }
+        }
 
 
         function saveRecord() {
             const code = document.getElementById('empCode').value;
-            const status = document.getElementById('attendanceStatus').value;
-            records.push({name: employees[code] || "غير معروف", date: document.getElementById('recordDate').value, time: document.getElementById('recordTime').value, status: status});
+            if(!employees[code]) { alert("كود الموظف غير موجود! أضفه أولاً."); return; }
+            records.push({
+                name: employees[code], 
+                date: document.getElementById('recordDate').value, 
+                time: document.getElementById('recordTime').value, 
+                status: document.getElementById('attendanceStatus').value
+            });
             localStorage.setItem('records', JSON.stringify(records));
             renderTable(records);
         }
@@ -58,27 +89,20 @@
 
         function filterReport(type) {
             const now = new Date();
-            const filtered = records.filter(r => {
+            renderTable(records.filter(r => {
                 const rDate = new Date(r.date);
                 if(type === 'month') return rDate.getMonth() === now.getMonth() && rDate.getFullYear() === now.getFullYear();
                 if(type === 'week') {
                     const diff = (now - rDate) / (1000 * 60 * 60 * 24);
                     return diff >= 0 && diff <= 7;
                 }
-            });
-            renderTable(filtered);
+            }));
         }
 
 
         function filterByEmployee() {
             const name = document.getElementById('searchName').value;
             renderTable(records.filter(r => r.name.includes(name)));
-        }
-
-
-        function filterByDate() {
-            const date = document.getElementById('filterDate').value;
-            renderTable(records.filter(r => r.date === date));
         }
 
 
