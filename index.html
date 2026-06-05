@@ -2,35 +2,41 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>نظام الحضور - إعدادية النجدين</title>
+    <title>إدارة الحضور - إعدادية النجدين</title>
     <style>
         body { font-family: sans-serif; padding: 20px; background: #f4f4f9; text-align: center; }
         .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        .admin-section { background: #e9ecef; padding: 15px; margin-bottom: 20px; border-radius: 8px; border: 1px dashed #6c757d; }
-        input { padding: 10px; margin: 5px; border: 1px solid #ccc; border-radius: 5px; }
-        button { padding: 10px 20px; background: #28a745; color: white; border: none; cursor: pointer; border-radius: 5px; }
+        .admin-section { background: #e9ecef; padding: 15px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ccc; }
+        input, select { padding: 8px; margin: 5px; border-radius: 4px; border: 1px solid #ccc; }
+        button { padding: 8px 15px; cursor: pointer; border-radius: 4px; border: none; }
+        .btn-add { background: #28a745; color: white; }
+        .btn-record { background: #007bff; color: white; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #ddd; padding: 10px; }
-        th { background-color: #007bff; color: white; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h3>المديرية العامة لتربية القادسية</h3>
-        <h3>إعدادية النجدين للبنين</h3>
-        <hr>
+        <h3>إعدادية النجدين للبنين - لوحة التحكم</h3>
 
 
         <div class="admin-section">
-            <h4>لوحة إدارة الموظفين</h4>
             <input type="text" id="newCode" placeholder="كود الموظف">
             <input type="text" id="newName" placeholder="اسم الموظف">
-            <button onclick="addEmployee()">إضافة موظف</button>
+            <button class="btn-add" onclick="addEmployee()">إضافة موظف</button>
         </div>
 
 
-        <input type="text" id="empCode" placeholder="أدخل كود الموظف للتسجيل">
-        <button onclick="recordAttendance()" style="background:#007bff">تسجيل الحضور</button>
+        <div>
+            <input type="text" id="empCode" placeholder="كود الموظف">
+            <input type="time" id="manualTime" title="اختر الوقت يدوياً أو اتركه فارغاً للوقت الحالي">
+            <select id="attendanceStatus">
+                <option value="حاضر">حاضر</option>
+                <option value="متأخر">متأخر</option>
+                <option value="مجاز">مجاز</option>
+            </select>
+            <button class="btn-record" onclick="recordAttendance()">تسجيل</button>
+        </div>
 
 
         <table id="attendanceTable">
@@ -46,22 +52,26 @@
         function addEmployee() {
             const code = document.getElementById('newCode').value;
             const name = document.getElementById('newName').value;
-            if(code && name) {
-                employees[code] = name;
-                localStorage.setItem('employees', JSON.stringify(employees));
-                alert("تم إضافة الموظف!");
-            }
+            if(code && name) { employees[code] = name; localStorage.setItem('employees', JSON.stringify(employees)); alert("تمت إضافة الموظف!"); }
         }
 
 
         function recordAttendance() {
             const code = document.getElementById('empCode').value;
-            if (!employees[code]) { alert("الموظف غير موجود! أضفه من لوحة التحكم"); return; }
+            const status = document.getElementById('attendanceStatus').value;
+            const manualTime = document.getElementById('manualTime').value;
+
+
+            if (!employees[code]) { alert("كود غير موجود!"); return; }
+
+
             const now = new Date();
             const days = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+            const displayTime = manualTime ? manualTime : now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+
             const row = document.getElementById('attendanceTable').insertRow(1);
-            const status = (now.getHours() < 8) ? "حاضر" : "متأخر";
-            row.innerHTML = `<td>${employees[code]}</td><td>${now.toLocaleDateString()}</td><td>${days[now.getDay()]}</td><td>${now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td><td>${status}</td>`;
+            row.innerHTML = `<td>${employees[code]}</td><td>${now.toLocaleDateString()}</td><td>${days[now.getDay()]}</td><td>${displayTime}</td><td>${status}</td>`;
         }
     </script>
 </body>
