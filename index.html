@@ -15,15 +15,11 @@
 <body>
     <div class="container">
         <h3>إدارة الحضور - إعدادية النجدين للبنين</h3>
-
-
         <div class="controls">
             <input type="text" id="newEmpName" placeholder="اسم الموظف الجديد">
             <input type="text" id="newEmpCode" placeholder="كود الموظف">
-            <button onclick="addEmployee()" style="background:#6c757d; color:white;">إضافة موظف جديد</button>
+            <button onclick="addEmployee()" style="background:#6c757d; color:white;">حفظ الموظف</button>
         </div>
-
-
         <div class="controls">
             <input type="text" id="empCode" placeholder="كود الموظف">
             <input type="date" id="recordDate">
@@ -38,93 +34,36 @@
             <hr>
             <input type="text" id="searchName" placeholder="بحث باسم الموظف">
             <button onclick="filterByEmployee()">بحث موظف</button>
-            <button onclick="filterReport('week')" style="background:#ffc107;">أسبوعي</button>
-            <button onclick="filterReport('month')" style="background:#17a2b8; color:white;">شهري</button>
             <button onclick="exportTableToCSV()" style="background:#28a745; color:white;">تصدير Excel</button>
             <button onclick="renderTable(records)">عرض الكل</button>
         </div>
-
-
         <table id="attendanceTable">
             <thead><tr><th>الاسم</th><th>التاريخ</th><th>الوقت</th><th>الحالة</th><th>إجراء</th></tr></thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
-
-
     <script>
         let records = JSON.parse(localStorage.getItem('records')) || [];
-        let employees = JSON.parse(localStorage.getItem('employees')) || {};
-        let currentData = records;
-
-
-        document.getElementById('recordDate').valueAsDate = new Date();
-        document.getElementById('recordTime').value = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false});
-
-
+        let employees = JSON.parse(localStorage.getItem('employees')) || {"101": "رحيم", "102": "عصام"};
         function addEmployee() {
-            const name = document.getElementById('newEmpName').value;
-            const code = document.getElementById('newEmpCode').value;
-            if(name && code) {
-                employees[code] = name;
-                localStorage.setItem('employees', JSON.stringify(employees));
-                alert("تم إضافة الموظف: " + name);
-            }
+            let name = document.getElementById('newEmpName').value;
+            let code = document.getElementById('newEmpCode').value;
+            if(name && code) { employees[code] = name; localStorage.setItem('employees', JSON.stringify(employees)); alert("تم الحفظ"); }
         }
-
-
         function saveRecord() {
-            const code = document.getElementById('empCode').value;
-            if(!employees[code]) { alert("كود الموظف غير موجود! أضفه أولاً."); return; }
-            records.push({
-                name: employees[code], 
-                date: document.getElementById('recordDate').value, 
-                time: document.getElementById('recordTime').value, 
-                status: document.getElementById('attendanceStatus').value
-            });
-            localStorage.setItem('records', JSON.stringify(records));
-            renderTable(records);
+            let code = document.getElementById('empCode').value;
+            records.push({name: employees[code] || "غير معروف", date: document.getElementById('recordDate').value, time: document.getElementById('recordTime').value, status: document.getElementById('attendanceStatus').value});
+            localStorage.setItem('records', JSON.stringify(records)); renderTable(records);
         }
-
-
-        function filterReport(type) {
-            const now = new Date();
-            renderTable(records.filter(r => {
-                const rDate = new Date(r.date);
-                if(type === 'month') return rDate.getMonth() === now.getMonth() && rDate.getFullYear() === now.getFullYear();
-                if(type === 'week') {
-                    const diff = (now - rDate) / (1000 * 60 * 60 * 24);
-                    return diff >= 0 && diff <= 7;
-                }
-            }));
-        }
-
-
-        function filterByEmployee() {
-            const name = document.getElementById('searchName').value;
-            renderTable(records.filter(r => r.name.includes(name)));
-        }
-
-
         function exportTableToCSV() {
             let csv = "\uFEFFالاسم,التاريخ,الوقت,الحالة\n";
-            currentData.forEach(r => csv += `${r.name},${r.date},${r.time},${r.status}\n`);
+            records.forEach(r => csv += `${r.name},${r.date},${r.time},${r.status}\n`);
             let blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
-            let link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "تقرير.csv";
-            link.click();
+            let link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "تقرير.csv"; link.click();
         }
-
-
         function renderTable(data) {
-            currentData = data;
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = "";
-            data.forEach((rec, index) => {
-                tbody.innerHTML += `<tr><td>${rec.name}</td><td>${rec.date}</td><td>${rec.time}</td><td>${rec.status}</td>
-                <td><button onclick="deleteRecord(${index})">حذف</button></td></tr>`;
-            });
+            const tbody = document.getElementById('tableBody'); tbody.innerHTML = "";
+            data.forEach((rec, index) => { tbody.innerHTML += `<tr><td>${rec.name}</td><td>${rec.date}</td><td>${rec.time}</td><td>${rec.status}</td><td><button onclick="deleteRecord(${index})">حذف</button></td></tr>`; });
         }
         function deleteRecord(index) { records.splice(index, 1); localStorage.setItem('records', JSON.stringify(records)); renderTable(records); }
         renderTable(records);
