@@ -2,48 +2,50 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>نظام الحضور الذكي</title>
+    <title>نظام الحضور والانصراف</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; background: #f4f7f6; padding: 10px; }
-        .header { font-size: 20px; font-weight: bold; margin-bottom: 5px; }
-        .clock { font-size: 22px; color: #3f51b5; margin-bottom: 10px; }
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 280px; margin: 0 auto; }
-        button { padding: 15px; font-size: 18px; border: none; border-radius: 8px; background: #3f51b5; color: white; }
-        .display { font-size: 30px; background: #ddd; padding: 5px; margin: 10px auto; max-width: 150px; }
-        table { width: 100%; margin-top: 15px; border-collapse: collapse; }
-        th, td { border: 1px solid #ccc; padding: 8px; }
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f9; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        input { padding: 10px; width: 200px; }
+        button { padding: 10px 20px; background: #28a745; color: white; border: none; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        .late { color: red; font-weight: bold; }
+        .ontime { color: green; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="header">المديرية العامة لتربية القادسية</div>
-    <div class="clock" id="clock">00:00:00</div>
-    <div class="display" id="display">----</div>
-    <div class="grid">
-        <button onclick="add('1')">1</button><button onclick="add('2')">2</button><button onclick="add('3')">3</button>
-        <button onclick="add('4')">4</button><button onclick="add('5')">5</button><button onclick="add('6')">6</button>
-        <button onclick="add('7')">7</button><button onclick="add('8')">8</button><button onclick="add('9')">9</button>
-        <button onclick="clearD()" style="background:#f44336">CLR</button><button onclick="add('0')">0</button><button onclick="check()" style="background:#4caf50">ENT</button>
+    <div class="container">
+        <h2>نظام تسجيل الحضور</h2>
+        <input type="text" id="empCode" placeholder="أدخل كود الموظف">
+        <button onclick="recordAttendance()">تسجيل الحضور</button>
+
+
+        <table id="attendanceTable">
+            <tr>
+                <th>الكود</th>
+                <th>التاريخ</th>
+                <th>وقت الحضور</th>
+                <th>الحالة</th>
+            </tr>
+        </table>
     </div>
-    <table id="logTable"><thead><tr><th>الاسم</th><th>التوقيت</th><th>الحالة</th></tr></thead><tbody></tbody></table>
 
 
     <script>
-        // ساعة حية
-        setInterval(() => document.getElementById('clock').innerText = new Date().toLocaleTimeString('ar-IQ'), 1000);
+        function recordAttendance() {
+            const code = document.getElementById('empCode').value;
+            const now = new Date();
+            const date = now.toLocaleDateString();
+            const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const hour = now.getHours();
+            const status = (hour < 8) ? "حاضر" : "متأخر";
+            const statusClass = (hour < 8) ? "ontime" : "late";
 
 
-        const staff = {"2026": "عصام الأسدي", "1111": "رقية عصام"};
-        let pin = "";
-        function add(n) { if(pin.length < 4) { pin += n; document.getElementById('display').innerText = "*".repeat(pin.length); } }
-        function clearD() { pin = ""; document.getElementById('display').innerText = "----"; }
-        function check() {
-            if(staff[pin]) {
-                const now = new Date();
-                const status = (now.getHours() > 8 || (now.getHours() === 8 && now.getMinutes() > 30)) ? "متأخر" : "حاضر";
-                document.getElementById('logTable').getElementsByTagName('tbody')[0].innerHTML += 
-                    `<tr><td>${staff[pin]}</td><td>${now.toLocaleTimeString('ar-IQ')}</td><td>${status}</td></tr>`;
-            } else { alert("رمز غير صحيح!"); }
-            clearD();
+            const table = document.getElementById('attendanceTable');
+            const row = table.insertRow(1);
+            row.innerHTML = `<td>${code}</td><td>${date}</td><td>${time}</td><td class="${statusClass}">${status}</td>`;
         }
     </script>
 </body>
