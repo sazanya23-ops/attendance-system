@@ -29,6 +29,10 @@
             <hr>
             <input type="text" id="searchName" placeholder="اسم الموظف">
             <button onclick="filterByEmployee()">بحث موظف</button>
+            <input type="date" id="filterDate">
+            <button onclick="filterByDate()">تقرير يومي</button>
+            <button onclick="filterReport('week')" style="background:#ffc107;">أسبوعي</button>
+            <button onclick="filterReport('month')" style="background:#17a2b8; color:white;">شهري</button>
             <button onclick="exportTableToCSV()" style="background:#28a745; color:white;">تصدير Excel</button>
             <button onclick="renderTable(records)">عرض الكل</button>
         </div>
@@ -40,6 +44,9 @@
     <script>
         let records = JSON.parse(localStorage.getItem('records')) || [];
         let employees = {"101": "رحيم", "102": "عصام"};
+        let currentData = records;
+
+
         function saveRecord() {
             const code = document.getElementById('empCode').value;
             const status = document.getElementById('attendanceStatus').value;
@@ -47,17 +54,47 @@
             localStorage.setItem('records', JSON.stringify(records));
             renderTable(records);
         }
+
+
+        function filterReport(type) {
+            const now = new Date();
+            const filtered = records.filter(r => {
+                const rDate = new Date(r.date);
+                if(type === 'month') return rDate.getMonth() === now.getMonth() && rDate.getFullYear() === now.getFullYear();
+                if(type === 'week') {
+                    const diff = (now - rDate) / (1000 * 60 * 60 * 24);
+                    return diff >= 0 && diff <= 7;
+                }
+            });
+            renderTable(filtered);
+        }
+
+
+        function filterByEmployee() {
+            const name = document.getElementById('searchName').value;
+            renderTable(records.filter(r => r.name.includes(name)));
+        }
+
+
+        function filterByDate() {
+            const date = document.getElementById('filterDate').value;
+            renderTable(records.filter(r => r.date === date));
+        }
+
+
         function exportTableToCSV() {
-            // إضافة رمز الـ UTF-8 BOM ليتعرف إكسل على اللغة العربية
             let csv = "\uFEFFالاسم,التاريخ,الوقت,الحالة\n";
-            records.forEach(r => csv += `${r.name},${r.date},${r.time},${r.status}\n`);
+            currentData.forEach(r => csv += `${r.name},${r.date},${r.time},${r.status}\n`);
             let blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
             let link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = "تقرير_الحضور.csv";
+            link.download = "تقرير.csv";
             link.click();
         }
+
+
         function renderTable(data) {
+            currentData = data;
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = "";
             data.forEach((rec, index) => {
